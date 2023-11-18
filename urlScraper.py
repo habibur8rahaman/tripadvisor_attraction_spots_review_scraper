@@ -1,8 +1,5 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
-import pandas as pd
-import os
 import time
 
 
@@ -11,10 +8,8 @@ def all_urls(url):
     browser = webdriver.Chrome()
 
     urls = []
-    #names = []
-    #reviewsNum = []
 
-    while(url != False):
+    while url:
         browser.get(url)
         time.sleep(4)
         content = browser.page_source
@@ -25,15 +20,15 @@ def all_urls(url):
 
 
         for place in places:
+
             try:
                 r = place.find("div", class_="jVDab o W f u w JqMhy")
                 r = int(r.find("span", class_="biGQs _P pZUbB osNWb").text)
             except:
                 r = False
 
-            if r != False and r>5:
-                #names.append(place.find("a").text)
-                #reviewsNum.append(r)
+
+            if r != False and r > 5:
                 urls.append("https://www.tripadvisor.com" + place.find("a")['href'])
 
         try:
@@ -45,12 +40,6 @@ def all_urls(url):
     browser.quit()
     return urls
 
-
-#urls= all_urls("https://www.tripadvisor.com/Attractions-g293935-Activities-a_allAttractions.true-Bangladesh.html")
-
-#print(urls)
-#print(len(urls))
-#print(rn)
 
 
 

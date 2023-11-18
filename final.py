@@ -1,27 +1,21 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import pandas as pd
+import urlScraper
 
-#service = Service(executable_path='D:/work/chromeDriver/chromedriver-win64/chromedriver.exe')
-#options = webdriver.ChromeOptions()
-#browser = webdriver.Chrome(service=service, options=options)
-
-#browser = webdriver.Chrome(executable_path="D:\work\chromeDriver\chromedriver.exe")
 
 browser = webdriver.Chrome()
-
 
 LocationName = []
 reviewers = []
 ratings = []
-reviewTitles = []
+review_titles = []
 reviews = []
 
 
+def scrap_review(url):
 
-def scrapReview(url):
-
-    while(url != False):
+    while url:
 
         browser.get(url)
         content = browser.page_source
@@ -29,82 +23,63 @@ def scrapReview(url):
         soup = BeautifulSoup(content, features='html.parser')
 
         place = soup.find("div", class_="mmBWG")
-        reviewSection= soup.find("div", class_="LbPSX")
+        review_section= soup.find("div", class_="LbPSX")
 
         name = place.find('h1').text
 
-        print(name)
+        reviewer = review_section.find_all("div", class_= "mwPje f M k")
+        rating = review_section.find_all("svg", class_="UctUV d H0")
+        review_box = review_section.find_all("span", class_="yCeTE")
 
-        #reviewer = reviewSection.find_all("span", class_="biGQs _P fiohW fOtGX")
-        reviewer = reviewSection.find_all("div", class_= "mwPje f M k")
-        rating = reviewSection.find_all("svg", class_="UctUV d H0")
-        fullReview = reviewSection.find_all("span", class_="yCeTE")
-        #review = reviewSection.find_all("div", class_="_T FKffI bmUTE")
-        #review = reviewSection.find_all("div", class_="_T FKffI bmUTE")
-
-        reviewTitle = []
+        review_title = []
         review = []
 
-
-        for i in range(len(fullReview)):
-            if i%2==0:
-                reviewTitle.append(fullReview[i])
+        for i in range(len(review_box)):
+            if i % 2 == 0:
+                review_title.append(review_box[i])
             else:
-                review.append(fullReview[i])
+                review.append(review_box[i])
 
-        print(len(reviewer), len(rating), len(reviewTitle), len(review))
 
         for i in range(len(reviewer)):
 
             LocationName.append(name)
             reviewers.append(reviewer[i].find("span", class_="biGQs _P fiohW fOtGX").text)
             ratings.append(float(rating[i]['aria-label'].split(" ")[0].strip()))
-            reviewTitles.append(reviewTitle[i].text)
+            review_titles.append(review_title[i].text)
             reviews.append(review[i].text)
 
 
-
         try:
-            url = reviewSection.find("div", class_="xkSty")
+            url = review_section.find("div", class_="xkSty")
             url = "https://www.tripadvisor.com"+url.find("a")['href']
         except:
             url = False
 
-    #browser.quit()
-    storeData(LocationName, reviewers, ratings, reviewTitles, reviews)
+    store_data(LocationName, reviewers, ratings, review_titles, reviews)
 
 
 
-def storeData(LocationName, reviewers, ratings, reviewTitles, reviews):
+def store_data(LocationName, reviewers, ratings, review_titles, reviews):
 
     df = pd.DataFrame(
         {
             'Location': LocationName,
             'Reviewer': reviewers,
             'Rating': ratings,
-            'Review Title': reviewTitles,
+            'Review Title': review_titles,
             'Review': reviews
         }
     )
 
-    df.to_csv('attractions.csv', mode='a', index=False, header=False)
-
-
-    #df.to_excel('attractions.xlsx', sheet_name="Sheet1")
-
-    #df.to_csv('attractions.csv', mode='a', index=False, header=False)
-    #browser.quit()
+    df.to_csv('reviews.csv', mode='a', index=False, header=False)
 
 
 
-#urls = urlScraper.all_urls("https://www.tripadvisor.com/Attractions-g293935-Activities-a_allAttractions.true-Bangladesh.html")
-urls= ['https://www.tripadvisor.com/Attraction_Review-g23978483-d8557766-Reviews-Fantasy_Kingdom-Jamgora_Dhaka_Division.html', 'https://www.tripadvisor.com/Attraction_Review-g667472-d12113853-Reviews-1971_Genocide_Torture_Archive_Museum-Khulna_City_Khulna_Division.html']#scrapReview(urls)
+urls = urlScraper.all_urls('https://www.tripadvisor.com/Attractions-g293935-Activities-oa0-Bangladesh.html')
 
-#for i in (urlScraper.all_urls("https://www.tripadvisor.com/Attractions-g293935-Activities-a_allAttractions.true-Bangladesh.html")):
 for i in urls:
-
-    scrapReview(i)
-
+    scrap_review(i)
 
 browser.quit()
 
